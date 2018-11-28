@@ -1,5 +1,6 @@
 package edu.wpi.first.gradlerio
 
+import edu.wpi.first.gradlerio.caching.CacheDeletionInspector
 import edu.wpi.first.gradlerio.caching.WrapperInspector
 import edu.wpi.first.gradlerio.frc.FRCPlugin
 import edu.wpi.first.gradlerio.ide.ClionPlugin
@@ -91,6 +92,8 @@ class GradleRIOPlugin implements Plugin<Project> {
 
     void inspector(Project project) {
         def logger = ETLoggerFactory.INSTANCE.create("GR_INSPECTOR")
+        CacheDeletionInspector cacheDeletion = new CacheDeletionInspector()
+        cacheDeletion.run(logger)
         project.allprojects.each { Project proj ->
             if (!project.hasProperty("skip-inspector-${WrapperInspector.NAME}")) {
                 logger.info("Running ${WrapperInspector.NAME} inspector on project ${project.path}")
