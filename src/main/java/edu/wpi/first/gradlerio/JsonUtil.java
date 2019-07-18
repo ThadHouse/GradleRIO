@@ -14,11 +14,14 @@ import com.google.gson.GsonBuilder;
 public class JsonUtil {
     public static void mergeArrays(List<File> files, File outFile) throws IOException {
         Gson gson = new Gson();
-        List merged = new ArrayList();
+        List<Object> merged = new ArrayList<>();
 
         for (File f : files) {
             try (FileReader reader = new FileReader(f)) {
                 Object[] items = gson.fromJson(reader, Object[].class);
+                for (var itm : items) {
+                    System.out.println(itm);
+                }
                 merged.addAll(Arrays.asList(items));
             }
         }

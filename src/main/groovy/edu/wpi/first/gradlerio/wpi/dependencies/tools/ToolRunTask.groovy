@@ -8,6 +8,7 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.process.ExecSpec
+import org.gradle.api.provider.Property
 
 import javax.inject.Inject
 
@@ -16,14 +17,15 @@ class ToolRunTask extends DefaultTask implements SingletonTask {
     @Internal
     TaskProvider<ToolInstallTask> installTask
     @Internal
-    String toolName
+    Property<String> toolName
 
     @Inject
     ToolRunTask(String name, TaskProvider<ToolInstallTask> installTask) {
         group = 'GradleRIO'
         description = "Run the tool $name"
 
-        this.toolName = name
+        this.toolName = project.objects.property(String)
+        toolName.set(name)
         this.installTask = installTask
         dependsOn(installTask)
     }
@@ -59,8 +61,9 @@ class ToolRunTask extends DefaultTask implements SingletonTask {
         }
     }
 
+    @Internal
     @Override
-    String singletonName() {
+    Property<String> getSingletonName() {
         return toolName
     }
 }

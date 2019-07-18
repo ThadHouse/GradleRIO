@@ -15,7 +15,7 @@ class JavaSimulationTask extends ExternalLaunchTask {
     void run() {
         def ldpath = JavaTestPlugin.jniExtractionDir(project).absolutePath
         def java = Jvm.current().getExecutable("java").absolutePath
-        environment = TestPlugin.getSimLaunchEnv(project, ldpath)
+        environment.set(TestPlugin.getSimLaunchEnv(project, ldpath))
         for (Jar jar : taskDependencies.getDependencies(this).findAll { it instanceof Jar } as Set<Jar>) {
             def manifestAttributes = jar.manifest.attributes
 
