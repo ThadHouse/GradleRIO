@@ -1,6 +1,7 @@
 plugins {
     id 'com.gradle.plugin-publish' version '0.10.0'
     id 'java-gradle-plugin'
+    id 'java'
     id 'idea'
     id 'maven-publish'
     id 'groovy'
@@ -30,8 +31,8 @@ dependencies {
 archivesBaseName = "GradleRIO"
 
 compileGroovy {
-    sourceCompatibility = '8'
-    targetCompatibility = '8'
+    sourceCompatibility = '11'
+    targetCompatibility = '11'
 }
 
 allprojects {

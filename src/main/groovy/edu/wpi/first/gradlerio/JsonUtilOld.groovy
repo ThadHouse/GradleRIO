@@ -6,7 +6,7 @@ import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class JsonUtil {
+class JsonUtilOld {
 
     public static void mergeArrays(List<File> files, File outfile) {
         def slurper = new JsonSlurper()
