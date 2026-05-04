@@ -59,8 +59,8 @@ public class CppToolRunTask extends DefaultTask implements SingletonTask {
     private void runToolWindows() {
         Directory toolsFolder = this.toolsFolder.get();
         String toolName = this.toolName.get();
-        File outputFile = toolsFolder.file(toolName + ".vbs").getAsFile();
-        ProcessBuilder builder = new ProcessBuilder("wscript.exe", outputFile.getAbsolutePath(), "silent",
+        File outputFile = toolsFolder.file(toolName + ".exe").getAsFile();
+        ProcessBuilder builder = new ProcessBuilder(outputFile.getAbsolutePath(),
                 getArgumentPath(toolName.toLowerCase()));
         try {
             Process proc = builder.start();
@@ -79,7 +79,7 @@ public class CppToolRunTask extends DefaultTask implements SingletonTask {
     private void runToolUnix() {
         Directory toolsFolder = this.toolsFolder.get();
         String toolName = this.toolName.get();
-        File outputFile = toolsFolder.file(toolName + ".sh").getAsFile();
+        File outputFile = toolsFolder.file(toolName).getAsFile();
         operations.exec(spec -> {
             spec.setExecutable(outputFile.getAbsolutePath());
             spec.args(getArgumentPath(toolName.toLowerCase()));

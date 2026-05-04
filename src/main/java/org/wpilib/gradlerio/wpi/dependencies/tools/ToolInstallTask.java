@@ -14,6 +14,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import edu.wpi.first.toolchain.NativePlatforms;
+
 import org.codehaus.groovy.runtime.IOGroovyMethods;
 import org.codehaus.groovy.runtime.ResourceGroovyMethods;
 import org.gradle.api.Action;
@@ -138,7 +140,7 @@ public class ToolInstallTask extends DefaultTask {
     }
 
     private static File getScriptFile(Directory toolsFolder, String toolName) {
-        return toolsFolder.file(toolName + ".vbs").getAsFile();
+        return toolsFolder.file(toolName + ".exe").getAsFile();
     }
 
     private static Dependency getDependencyObject(Configuration configuration, String artifactName) {
