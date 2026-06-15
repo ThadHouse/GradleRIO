@@ -103,7 +103,8 @@ public class WPIJavaDepsExtension {
             createJniDependency("org.wpilib.wpinet", "wpinet-cpp", versions.getWpilibVersion(), debug, platform),
             createJniDependency("org.wpilib.wpiutil", "wpiutil-cpp", versions.getWpilibVersion(), debug, platform),
             createJniDependency("org.wpilib.apriltag", "apriltag-cpp", versions.getWpilibVersion(), debug, platform),
-            createJniDependency("org.wpilib.datalog", "datalog-cpp", versions.getWpilibVersion(), debug, platform)
+            createJniDependency("org.wpilib.datalog", "datalog-cpp", versions.getWpilibVersion(), debug, platform),
+            createJniDependency("org.wpilib.mrclib", "mrclib-cpp", versions.getMrcLibVersion(), false, platform) // Does not have debug in any case
         );
     }
 }
