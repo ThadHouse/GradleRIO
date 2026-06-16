@@ -8,7 +8,7 @@ def versionMap = [
   opencvVersion: 'org.wpilib.thirdparty.opencv:opencv-java:+',
   wpicalToolVersion: 'org.wpilib.tools:wpical:+:windowsx86-64@zip',
   processstarterToolVersion: 'org.wpilib.tools:processstarter:+:windowsx86-64@zip',
-  mrclibVersion: 'org.wpilib.mrclib:mrclib-cpp:+:windowsx86-64@zip',
+  mrcLibVersion: 'org.wpilib.mrclib:mrclib-cpp:+:windowsx86-64@zip',
 ]
 
 configurations {
