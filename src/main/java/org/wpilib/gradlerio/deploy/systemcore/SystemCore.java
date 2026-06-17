@@ -3,7 +3,7 @@ package org.wpilib.gradlerio.deploy.systemcore;
 import javax.inject.Inject;
 
 import org.gradle.api.Project;
-
+import org.gradle.internal.os.OperatingSystem;
 import org.wpilib.deployutils.deploy.DeployExtension;
 import org.wpilib.deployutils.deploy.target.location.SshDeployLocation;
 import org.wpilib.gradlerio.deploy.WPILibExtension;
@@ -70,10 +70,11 @@ public class SystemCore extends WPIRemoteTarget {
 
     public void setTeam(int team) {
         this.team = team;
+        OperatingSystem.current().isWindows();
+
         setAddresses(
             "10." + (team / 100) + "." + (team % 100) + ".2", // 10.TE.AM.2
-            "172.26.0.1", // Windows USB
-            "172.27.0.1", // Unix USB
+            OperatingSystem.current().isWindows() ? "172.26.0.1" : "172.27.0.1", // Windows USB : Unix USB
             "172.30.0.1" // WiFi
         );
     }
