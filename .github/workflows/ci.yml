@@ -14,6 +14,8 @@ jobs:
   build:
     needs: validation
     runs-on: ubuntu-24.04
+    env:
+      MAVEN_LOCAL_REPO: ${{ github.workspace }}/ci-maven-repository
     steps:
     - uses: actions/checkout@v4
       with:
@@ -23,18 +25,27 @@ jobs:
         java-version: 25
         distribution: temurin
     - name: Publish to Maven Local
-      run: ./gradlew build publishToMavenLocal --stacktrace -PlocalPublish
+      run: ./gradlew -Dmaven.repo.local="$MAVEN_LOCAL_REPO" build publishToMavenLocal --stacktrace -PlocalPublish
+    - name: Trace Maven local publish output
+      run: |
+        set -eu
+        echo "MAVEN_LOCAL_REPO=$MAVEN_LOCAL_REPO"
+        test -d "$MAVEN_LOCAL_REPO"
+        du -sh "$MAVEN_LOCAL_REPO"
+        find "$MAVEN_LOCAL_REPO/org/wpilib" -maxdepth 8 -type f | sort | sed -n '1,200p'
     - name: Check output
       run: git --no-pager diff --exit-code HEAD
     - uses: actions/upload-artifact@v4
       with:
         name: Maven
-        path: ~/.m2/repository/
+        path: ${{ env.MAVEN_LOCAL_REPO }}/
 
   test_examples:
     needs: build
     runs-on: ubuntu-24.04
     container: wpilib/debian-base:trixie
+    env:
+      MAVEN_LOCAL_REPO: ${{ github.workspace }}/ci-maven-repository
     strategy:
      matrix:
         language: [cpp, java] #, asm, jni]
@@ -44,17 +55,33 @@ jobs:
       with:
         java-version: 25
         distribution: temurin
+    - name: Trace Maven local configuration
+      run: |
+        set -eu
+        echo "HOME=$HOME"
+        echo "MAVEN_LOCAL_REPO=$MAVEN_LOCAL_REPO"
+        id
+        getent passwd "$(id -u)" || true
+        java -XshowSettings:properties -version 2>&1 | grep 'user.home\|java.home' || true
     - uses: actions/download-artifact@v4
       with:
         name: Maven
-        path: ~/.m2/repository/
+        path: ${{ env.MAVEN_LOCAL_REPO }}/
+    - name: Trace downloaded Maven artifact
+      run: |
+        set -eu
+        echo "Downloaded Maven repository:"
+        test -d "$MAVEN_LOCAL_REPO"
+        du -sh "$MAVEN_LOCAL_REPO"
+        find "$MAVEN_LOCAL_REPO" -maxdepth 4 -type d | sort | sed -n '1,120p'
+        find "$MAVEN_LOCAL_REPO/org/wpilib" -maxdepth 8 -type f | sort | sed -n '1,200p'
 
     - name: Setup SystemCore Toolchain
       if: ${{ (matrix.language == 'cpp') || (matrix.language == 'asm') }}
-      run: ../../gradlew installSystemCoreToolchain
+      run: ../../gradlew -Dmaven.repo.local="$MAVEN_LOCAL_REPO" installSystemCoreToolchain
       working-directory: testing/${{ matrix.language }}
     - name: Test ${{ matrix.language }} Build
-      run: ../../gradlew build
+      run: ../../gradlew -Dmaven.repo.local="$MAVEN_LOCAL_REPO" build
       working-directory: testing/${{ matrix.language }}
 
   publish:
