@@ -19,6 +19,7 @@ import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.api.tasks.testing.logging.TestLogEvent;
@@ -114,7 +115,7 @@ public class WPIJavaExtension {
         return simulationTaskRelease;
     }
 
-    private void configureSimulationTask(JavaSimulationTask t, boolean debug,
+    private void configureSimulationTask(JavaExec t, boolean debug,
             Provider<ExtractNativeJavaArtifacts> extract) {
         configureExecutableNatives(t, extract);
         List<String> jvmArgs = new ArrayList<>();
@@ -197,6 +198,14 @@ public class WPIJavaExtension {
         externalSimulationTaskRelease.configure(x -> x.getJars().add(jar));
         simulationTaskDebug.configure(x -> x.classpath(jar));
         simulationTaskRelease.configure(x -> x.classpath(jar));
+    }
+
+    public void configureJavaExecApplication(JavaExec application) {
+        configureJavaExecApplication(application, false);
+    }
+
+    public void configureJavaExecApplication(JavaExec application, boolean debug) {
+        configureSimulationTask(application, debug, debug ? extractNativeDebugArtifacts : extractNativeReleaseArtifacts);
     }
 
     @Inject
