@@ -8,6 +8,7 @@ import javax.inject.Inject;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 import org.wpilib.gradlerio.wpi.WPIVersionsExtension;
+import org.wpilib.toolchain.NativePlatforms;
 
 public class WPIJavaDepsExtension {
 
@@ -94,17 +95,21 @@ public class WPIJavaDepsExtension {
     }
 
     private List<Provider<String>> getWpilibJniInternal(boolean debug, String platform) {
-        return List.of(
-            createJniDependency("org.wpilib.hal", "hal-cpp", versions.getWpilibVersion(), debug, platform),
-            createJniDependency("org.wpilib.wpimath", "wpimath-cpp", versions.getWpilibVersion(), debug, platform),
-            createJniDependency("org.wpilib.ntcore", "ntcore-cpp", versions.getWpilibVersion(), debug, platform),
-            createJniDependency("org.wpilib.cscore", "cscore-cpp", versions.getWpilibVersion(), debug, platform),
-            createJniDependency("org.wpilib.thirdparty.opencv", "opencv-cpp", versions.getOpencvVersion(), debug, platform),
-            createJniDependency("org.wpilib.wpinet", "wpinet-cpp", versions.getWpilibVersion(), debug, platform),
-            createJniDependency("org.wpilib.wpiutil", "wpiutil-cpp", versions.getWpilibVersion(), debug, platform),
-            createJniDependency("org.wpilib.apriltag", "apriltag-cpp", versions.getWpilibVersion(), debug, platform),
-            createJniDependency("org.wpilib.datalog", "datalog-cpp", versions.getWpilibVersion(), debug, platform),
-            createJniDependency("org.wpilib.mrclib", "mrclib-cpp", versions.getMrcLibVersion(), false, platform) // Does not have debug in any case
-        );
+        List<Provider<String>> valueList = new ArrayList<>();
+
+        valueList.add(createJniDependency("org.wpilib.hal", "hal-cpp", versions.getWpilibVersion(), debug, platform));
+        valueList.add(createJniDependency("org.wpilib.wpimath", "wpimath-cpp", versions.getWpilibVersion(), debug, platform));
+        valueList.add(createJniDependency("org.wpilib.ntcore", "ntcore-cpp", versions.getWpilibVersion(), debug, platform));
+        valueList.add(createJniDependency("org.wpilib.cscore", "cscore-cpp", versions.getWpilibVersion(), debug, platform));
+        valueList.add(createJniDependency("org.wpilib.thirdparty.opencv", "opencv-cpp", versions.getOpencvVersion(), debug, platform));
+        valueList.add(createJniDependency("org.wpilib.wpinet", "wpinet-cpp", versions.getWpilibVersion(), debug, platform));
+        valueList.add(createJniDependency("org.wpilib.wpiutil", "wpiutil-cpp", versions.getWpilibVersion(), debug, platform));
+        valueList.add(createJniDependency("org.wpilib.apriltag", "apriltag-cpp", versions.getWpilibVersion(), debug, platform));
+        valueList.add(createJniDependency("org.wpilib.datalog", "datalog-cpp", versions.getWpilibVersion(), debug, platform));
+
+        if (!platform.equals(NativePlatforms.systemcore)) {
+            valueList.add(createJniDependency("org.wpilib.mrclib", "mrclib-cpp", versions.getMrcLibVersion(), false, platform)); // Does not have debug in any case
+        }
+        return List.copyOf(valueList);
     }
 }
