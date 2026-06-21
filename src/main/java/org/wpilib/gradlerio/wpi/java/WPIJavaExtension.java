@@ -96,16 +96,10 @@ public class WPIJavaExtension {
         return runSimWithDebugJni;
     }
 
-    private final TaskProvider<JavaExternalSimulationTask> externalSimulationTaskDebug;
+    private final TaskProvider<JavaExternalSimulationTask> externalSimulationTask;
 
-    public TaskProvider<JavaExternalSimulationTask> getExternalSimulationTaskDebug() {
-        return externalSimulationTaskDebug;
-    }
-
-    private final TaskProvider<JavaExternalSimulationTask> externalSimulationTaskRelease;
-
-    public TaskProvider<JavaExternalSimulationTask> getExternalSimulationTaskRelease() {
-        return externalSimulationTaskRelease;
+    public TaskProvider<JavaExternalSimulationTask> getExternalSimulationTask() {
+        return externalSimulationTask;
     }
 
     private final Provider<ExtractNativeJavaArtifacts> typedExtractNativeArtifacts;
@@ -137,6 +131,7 @@ public class WPIJavaExtension {
                 String runConfig = ResourceGroovyMethods.getText(runConfigFile, "UTF-8");
                 ExternalRunConfig runConfigObj = gson.fromJson(runConfig, ExternalRunConfig.class);
                 externalExtensions = runConfigObj.runningExtensions;
+                t.setDebug(true);
             } catch (IOException e) {
                 throw new GradleException("Failed to read run configuration file: " + runConfigFile, e);
             }
@@ -207,8 +202,7 @@ public class WPIJavaExtension {
     }
 
     public void configureApplication(JavaApplication application) {
-        externalSimulationTaskDebug.configure(x -> x.setApplication(application));
-        externalSimulationTaskRelease.configure(x -> x.setApplication(application));
+        externalSimulationTask.configure(x -> x.setApplication(application));
         project.getTasks().named("run").configure(t -> {
             configureRunTask((JavaExec) t);
         });
@@ -267,18 +261,6 @@ public class WPIJavaExtension {
             extract.getFiles().from(releaseFileCollection);
         });
 
-        externalSimulationTaskDebug = project.getTasks().register("simulateExternalJavaDebug",
-                JavaExternalSimulationTask.class, t -> {
-                    t.getSimulationFile().set(project.getLayout().getBuildDirectory().file("sim/debug_java.json"));
-                    t.setDependencies(extractNativeDebugArtifacts, true);
-                });
-
-        externalSimulationTaskRelease = project.getTasks().register("simulateExternalJavaRelease",
-                JavaExternalSimulationTask.class, t -> {
-                    t.getSimulationFile().set(project.getLayout().getBuildDirectory().file("sim/release_java.json"));
-                    t.setDependencies(extractNativeReleaseArtifacts, false);
-                });
-
         typedExtractNativeArtifacts = project.getProviders().provider(() -> {
             if (runSimWithDebugJni.get()) {
                 return extractNativeDebugArtifacts.get();
@@ -286,5 +268,11 @@ public class WPIJavaExtension {
                 return extractNativeReleaseArtifacts.get();
             }
         });
+
+        externalSimulationTask = project.getTasks().register("simulateExternalJava",
+                JavaExternalSimulationTask.class, t -> {
+                    t.getSimulationFile().set(project.getLayout().getBuildDirectory().file("sim/java.json"));
+                    t.setDependencies(typedExtractNativeArtifacts, runSimWithDebugJni);
+                });
     }
 }

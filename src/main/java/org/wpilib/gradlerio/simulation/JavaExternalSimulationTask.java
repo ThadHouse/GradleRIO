@@ -18,7 +18,9 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.plugins.JavaApplication;
 import org.gradle.api.plugins.internal.JavaPluginHelper;
 import org.gradle.api.plugins.jvm.internal.JvmFeatureInternal;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.wpilib.gradlerio.wpi.WPIExtension;
@@ -27,11 +29,12 @@ import org.wpilib.gradlerio.wpi.simulation.SimulationExtension;
 
 public class JavaExternalSimulationTask extends DefaultTask {
     private Provider<ExtractNativeJavaArtifacts> extractJni;
-    private boolean isDebug;
     private final String projectName;
     private final WPIExtension ext;
     private JavaApplication application;
     private String taskPath;
+    private Property<Integer> debugPort;
+    private Property<Boolean> runSimWithDebugJni;
 
     @Inject
     public JavaExternalSimulationTask(ObjectFactory objects) {
@@ -39,12 +42,14 @@ public class JavaExternalSimulationTask extends DefaultTask {
         simulationFile = objects.fileProperty();
         this.projectName = getProject().getName();
         this.ext = getProject().getExtensions().getByType(WPIExtension.class);
+        this.debugPort = objects.property(Integer.class);
+        this.runSimWithDebugJni = objects.property(Boolean.class);
     }
 
-    public void setDependencies(Provider<ExtractNativeJavaArtifacts> extract, boolean debug) {
+    public void setDependencies(Provider<ExtractNativeJavaArtifacts> extract, Provider<Boolean> runSimWithDebugJni) {
         this.extractJni = extract;
-        isDebug = debug;
         this.dependsOn(extractJni);
+        this.runSimWithDebugJni.set(runSimWithDebugJni);
     }
 
     private final RegularFileProperty simulationFile;
@@ -62,15 +67,17 @@ public class JavaExternalSimulationTask extends DefaultTask {
         public final String libraryDir;
         public final String mainClassName;
         public final String taskPath;
+        public final int debugPort;
 
         public SimInfo(String name, List<HalSimPair> extensions, Map<String, String> environment, String libraryDir,
-                String mainClassName, String taskPath) {
+                String mainClassName, String taskPath, int debugPort) {
             this.name = name;
             this.extensions = extensions;
             this.environment = environment;
             this.libraryDir = libraryDir;
             this.mainClassName = mainClassName;
             this.taskPath = taskPath;
+            this.debugPort = debugPort;
         }
     }
 
@@ -79,7 +86,9 @@ public class JavaExternalSimulationTask extends DefaultTask {
         JvmFeatureInternal mainFeature = JavaPluginHelper.getJavaComponent(getProject()).getMainFeature();
         dependsOn(mainFeature.getRuntimeClasspathConfiguration());
         dependsOn(mainFeature.getJarTask());
-        this.taskPath = getProject().getTasks().named("run").get().getPath();
+        JavaExec runTask = (JavaExec) getProject().getTasks().named("run").get();
+        this.taskPath = runTask.getPath();
+        this.debugPort.set(runTask.getDebugOptions().getPort());
     }
 
     @TaskAction
@@ -94,7 +103,7 @@ public class JavaExternalSimulationTask extends DefaultTask {
 
         List<SimInfo> simInfo = new ArrayList<>();
 
-        List<HalSimPair> extensions = sim.getHalSimLocations(List.of(ldpath), isDebug);
+        List<HalSimPair> extensions = sim.getHalSimLocations(List.of(ldpath), runSimWithDebugJni.get());
 
         Map<String, String> env = sim.getEnvironment();
 
@@ -102,7 +111,7 @@ public class JavaExternalSimulationTask extends DefaultTask {
 
         String mainClass = application.getMainClass().get();
 
-        simInfo.add(new SimInfo(name, extensions, env, ldpath.getAbsolutePath(), mainClass, taskPath));
+        simInfo.add(new SimInfo(name, extensions, env, ldpath.getAbsolutePath(), mainClass, taskPath, debugPort.get()));
 
         GsonBuilder builder = new GsonBuilder();
         builder.setPrettyPrinting();
