@@ -38,6 +38,7 @@ deploy {
                 // getTargetTypeClass is a shortcut to get the class type using a string
 
                 wpilibJava(getArtifactTypeClass('WPILibJavaArtifact')) {
+                    debugJni = false
                 }
 
                 // Static files artifact
@@ -52,7 +53,7 @@ deploy {
 
 def deployArtifact = deploy.targets.systemcore.artifacts.wpilibJava
 
-wpi.java.debugJni = false
+wpi.java.runSimWithDebugJni = false
 
 // Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
 // Also defines JUnit 4.
@@ -92,6 +93,5 @@ wpi.sim.addWebsocketsClient().defaultEnabled = true
 application.mainClass = ROBOT_MAIN_CLASS
 
 deployArtifact.configureApplication(application)
-wpi.java.configureExecutableTasks(jar)
-wpi.java.configureJavaExecApplication(run)
+wpi.java.configureApplication(application)
 wpi.java.configureTestTasks(test)

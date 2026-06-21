@@ -12,39 +12,51 @@ import com.google.gson.GsonBuilder;
 
 import org.codehaus.groovy.runtime.ResourceGroovyMethods;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.Project;
+import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.plugins.JavaApplication;
+import org.gradle.api.plugins.internal.JavaPluginHelper;
+import org.gradle.api.plugins.jvm.internal.JvmFeatureInternal;
 import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.jvm.tasks.Jar;
 import org.wpilib.gradlerio.wpi.WPIExtension;
 import org.wpilib.gradlerio.wpi.java.ExtractNativeJavaArtifacts;
 import org.wpilib.gradlerio.wpi.simulation.SimulationExtension;
 
 public class JavaExternalSimulationTask extends DefaultTask {
-    private final List<Jar> jars = new ArrayList<>();
     private Provider<ExtractNativeJavaArtifacts> extractJni;
     private boolean isDebug;
+    private final String projectName;
+    private final WPIExtension ext;
+    private JavaApplication application;
 
-    @Internal
-    public List<Jar> getJars() {
-        return jars;
-    }
+    // @Internal
+    // public List<Jar> getJars() {
+    // return jars;
+    // }
 
-    public void setDependencies(SimulationExtension sim, Provider<ExtractNativeJavaArtifacts> extract, boolean debug, Project project) {
-        this.extractJni = extract;
-        isDebug = debug;
-        this.dependsOn(extractJni);
-    }
+    // public void setDependencies(SimulationExtension sim,
+    // Provider<ExtractNativeJavaArtifacts> extract, boolean debug, Project project)
+    // {
+    // this.extractJni = extract;
+    // isDebug = debug;
+    // this.dependsOn(extractJni);
+    // }
 
     @Inject
     public JavaExternalSimulationTask(ObjectFactory objects) {
         getOutputs().upToDateWhen(spec -> false);
-        dependsOn(jars);
         simulationFile = objects.fileProperty();
+        this.projectName = getProject().getName();
+        this.ext = getProject().getExtensions().getByType(WPIExtension.class);
+    }
+
+    public void setDependencies(Provider<ExtractNativeJavaArtifacts> extract, boolean debug) {
+        this.extractJni = extract;
+        isDebug = debug;
+        this.dependsOn(extractJni);
     }
 
     private final RegularFileProperty simulationFile;
@@ -72,9 +84,19 @@ public class JavaExternalSimulationTask extends DefaultTask {
         }
     }
 
+    public void setApplication(JavaApplication application) {
+        this.application = application;
+        JvmFeatureInternal mainFeature = JavaPluginHelper.getJavaComponent(getProject()).getMainFeature();
+        dependsOn(mainFeature.getRuntimeClasspathConfiguration());
+        dependsOn(mainFeature.getJarTask());
+    }
+
     @TaskAction
     public void execute() throws IOException {
-        var ext = getProject().getExtensions().getByType(WPIExtension.class);
+        if (application == null) {
+            throw new GradleException("Java application is not set for simulation task.");
+        }
+
         SimulationExtension sim = ext.getSim();
 
         File ldpath = extractJni.get().getDestinationDirectory().get().getAsFile();
@@ -85,13 +107,11 @@ public class JavaExternalSimulationTask extends DefaultTask {
 
         Map<String, String> env = sim.getEnvironment();
 
-        for (Jar jar : jars) {
-            String name =  jar.getName() + " (in project " + getProject().getName() + ")";
+        String name = application.getApplicationName() + " (in project " + projectName + ")";
 
-            String mainClass = (String)jar.getManifest().getAttributes().get("Main-Class");
+        String mainClass = application.getMainClass().get();
 
-            simInfo.add(new SimInfo(name, extensions, env, ldpath.getAbsolutePath(), mainClass));
-        }
+        simInfo.add(new SimInfo(name, extensions, env, ldpath.getAbsolutePath(), mainClass));
 
         GsonBuilder builder = new GsonBuilder();
         builder.setPrettyPrinting();

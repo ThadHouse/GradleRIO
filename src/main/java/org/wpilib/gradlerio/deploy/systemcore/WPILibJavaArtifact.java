@@ -37,10 +37,18 @@ public class WPILibJavaArtifact extends DebuggableJavaArtifact {
 
     private String javaCommand = "/usr/bin/java";
 
+    private final Property<Boolean> debugJni;
+
+    public Property<Boolean> getDebugJni() {
+        return debugJni;
+    }
+
     @Inject
     public WPILibJavaArtifact(String name, SystemCore target) {
         super(name, target);
         systemCore = target;
+        debugJni = target.getProject().getObjects().property(Boolean.class);
+        debugJni.set(false);
 
         jvmArgs.add("-Djava.library.path=" + WPILibDeployPlugin.LIB_DEPLOY_DIR);
         jvmArgs.add("--add-opens");
@@ -63,14 +71,13 @@ public class WPILibJavaArtifact extends DebuggableJavaArtifact {
             art.dependsOn(getJarProvider());
             art.dependsOn(getConfigurationProvider());
             art.dependsOn(this.getDeployTask());
-            //art.dependsOn(getJarProvider());
         });
 
         nativeZipArtifact = target.getArtifacts().create("nativeZips" + name, WPILibJNILibraryArtifact.class, artifact -> {
             target.setDeployStage(artifact, DeployStage.FileDeploy);
 
             var cbl = target.getProject().getProviders().provider(() -> {
-                boolean debug = target.getProject().getExtensions().getByType(WPIExtension.class).getJava().getDebugJni().get();
+                boolean debug = getDebugJni().get();
                 if (debug) {
                     return debugConfiguration;
                 } else {
