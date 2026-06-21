@@ -11,9 +11,8 @@ if (testingFolder.name != 'testing' || projectFolder.name != 'kotlin') {
     throw new GradleException("These projects are not to be used for robot projects. See README.md in the GradleRIO testing folder for the correct templates to use.")
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
+kotlin {
+    jvmToolchain(25)
 }
 
 def ROBOT_MAIN_CLASS = "first.team0000.robot.Main"
