@@ -10,4 +10,8 @@ public class HalSimPair {
         this.libName = libName;
         this.defaultEnabled = defaultEnabled;
     }
+
+    public HalSimPair withDefaultEnabled(boolean defaultEnabled) {
+        return new HalSimPair(this.name, this.libName, defaultEnabled);
+    }
 }

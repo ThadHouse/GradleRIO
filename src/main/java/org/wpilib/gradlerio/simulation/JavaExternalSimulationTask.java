@@ -31,19 +31,7 @@ public class JavaExternalSimulationTask extends DefaultTask {
     private final String projectName;
     private final WPIExtension ext;
     private JavaApplication application;
-
-    // @Internal
-    // public List<Jar> getJars() {
-    // return jars;
-    // }
-
-    // public void setDependencies(SimulationExtension sim,
-    // Provider<ExtractNativeJavaArtifacts> extract, boolean debug, Project project)
-    // {
-    // this.extractJni = extract;
-    // isDebug = debug;
-    // this.dependsOn(extractJni);
-    // }
+    private String taskPath;
 
     @Inject
     public JavaExternalSimulationTask(ObjectFactory objects) {
@@ -73,14 +61,16 @@ public class JavaExternalSimulationTask extends DefaultTask {
         public final Map<String, String> environment;
         public final String libraryDir;
         public final String mainClassName;
+        public final String taskPath;
 
         public SimInfo(String name, List<HalSimPair> extensions, Map<String, String> environment, String libraryDir,
-                String mainClassName) {
+                String mainClassName, String taskPath) {
             this.name = name;
             this.extensions = extensions;
             this.environment = environment;
             this.libraryDir = libraryDir;
             this.mainClassName = mainClassName;
+            this.taskPath = taskPath;
         }
     }
 
@@ -89,6 +79,7 @@ public class JavaExternalSimulationTask extends DefaultTask {
         JvmFeatureInternal mainFeature = JavaPluginHelper.getJavaComponent(getProject()).getMainFeature();
         dependsOn(mainFeature.getRuntimeClasspathConfiguration());
         dependsOn(mainFeature.getJarTask());
+        this.taskPath = getProject().getTasks().named("run").get().getPath();
     }
 
     @TaskAction
@@ -111,7 +102,7 @@ public class JavaExternalSimulationTask extends DefaultTask {
 
         String mainClass = application.getMainClass().get();
 
-        simInfo.add(new SimInfo(name, extensions, env, ldpath.getAbsolutePath(), mainClass));
+        simInfo.add(new SimInfo(name, extensions, env, ldpath.getAbsolutePath(), mainClass, taskPath));
 
         GsonBuilder builder = new GsonBuilder();
         builder.setPrettyPrinting();

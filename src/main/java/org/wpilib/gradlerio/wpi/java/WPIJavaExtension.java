@@ -1,6 +1,7 @@
 package org.wpilib.gradlerio.wpi.java;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +11,9 @@ import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
 
+import org.codehaus.groovy.runtime.ResourceGroovyMethods;
 import org.gradle.api.Action;
+import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.ArtifactView;
@@ -18,8 +21,6 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaApplication;
-import org.gradle.api.plugins.internal.JavaPluginHelper;
-import org.gradle.api.plugins.jvm.internal.JvmFeatureInternal;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.JavaExec;
@@ -29,17 +30,17 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent;
 import org.gradle.api.tasks.testing.logging.TestLogging;
 import org.gradle.api.tasks.util.PatternFilterable;
 import org.gradle.api.tasks.util.PatternSet;
-import org.gradle.jvm.tasks.Jar;
 import org.gradle.process.JavaForkOptions;
 import org.gradle.internal.os.OperatingSystem;
 import org.wpilib.gradlerio.simulation.HalSimPair;
 import org.wpilib.gradlerio.simulation.JavaExternalSimulationTask;
-import org.wpilib.gradlerio.simulation.JavaSimulationTask;
 import org.wpilib.gradlerio.wpi.WPIPlugin;
 import org.wpilib.gradlerio.wpi.WPIVersionsExtension;
 import org.wpilib.gradlerio.wpi.simulation.SimulationExtension;
 import org.wpilib.nativeutils.vendordeps.WPIJavaVendorDepsExtension;
 import org.wpilib.nativeutils.vendordeps.WPIVendorDepsExtension;
+
+import com.google.gson.Gson;
 
 public class WPIJavaExtension {
     private final Project project;
@@ -109,7 +110,11 @@ public class WPIJavaExtension {
 
     private final Provider<ExtractNativeJavaArtifacts> typedExtractNativeArtifacts;
 
-    private void configureSimulationTask(JavaExec t) {
+    private static class ExternalRunConfig {
+        public List<String> runningExtensions;
+    }
+
+    private void configureRunTask(JavaExec t) {
         configureExecutableNatives(t);
         List<String> jvmArgs = new ArrayList<>();
         jvmArgs.add("--add-opens");
@@ -122,12 +127,38 @@ public class WPIJavaExtension {
         }
         t.jvmArgs(jvmArgs);
 
+        List<String> externalExtensions = null;
+
+        Object externalConfigProperty = t.getProject().findProperty("externalRunConfiguration");
+        if (externalConfigProperty instanceof String runConfigString) {
+            File runConfigFile = new File(runConfigString);
+            Gson gson = new Gson();
+            try {
+                String runConfig = ResourceGroovyMethods.getText(runConfigFile, "UTF-8");
+                ExternalRunConfig runConfigObj = gson.fromJson(runConfig, ExternalRunConfig.class);
+                externalExtensions = runConfigObj.runningExtensions;
+            } catch (IOException e) {
+                throw new GradleException("Failed to read run configuration file: " + runConfigFile, e);
+            }
+        }
+
+        List<String> finalExternalExtensions = externalExtensions;
+
         t.doFirst(new Action<Task>() {
 
             @Override
             public void execute(Task task) {
                 File ldpath = typedExtractNativeArtifacts.get().getDestinationDirectory().get().getAsFile();
                 List<HalSimPair> extensions = sim.getHalSimLocations(List.of(ldpath), getRunSimWithDebugJni().get());
+
+                // Enumerate external extensions, launching the ones requested
+                if (finalExternalExtensions != null) {
+                    for (int i = 0; i < extensions.size(); i++) {
+                        HalSimPair ext = extensions.get(i);
+                        extensions.set(i, ext.withDefaultEnabled(finalExternalExtensions.contains(ext.libName)));
+                    }
+                }
+
                 Map<String, String> env = sim.getEnvironment();
 
                 t.environment(env);
@@ -179,7 +210,7 @@ public class WPIJavaExtension {
         externalSimulationTaskDebug.configure(x -> x.setApplication(application));
         externalSimulationTaskRelease.configure(x -> x.setApplication(application));
         project.getTasks().named("run").configure(t -> {
-            configureSimulationTask((JavaExec) t);
+            configureRunTask((JavaExec) t);
         });
     }
 
