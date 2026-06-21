@@ -7,6 +7,10 @@ import java.util.List;
 import javax.inject.Inject;
 
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.plugins.JavaApplication;
+import org.gradle.api.plugins.internal.JavaPluginHelper;
+import org.gradle.api.plugins.jvm.internal.JvmFeatureInternal;
+import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.bundling.Jar;
 import org.wpilib.deployutils.PathUtils;
 import org.wpilib.deployutils.deploy.context.DeployContext;
@@ -27,6 +31,8 @@ public class WPILibJavaArtifact extends DebuggableJavaArtifact {
 
     private final SystemCore systemCore;
 
+    private final Property<String> mainClass;
+
     private GarbageCollectorType gcType = GarbageCollectorType.ZGC;
 
     private String javaCommand = "/usr/bin/java";
@@ -46,7 +52,10 @@ public class WPILibJavaArtifact extends DebuggableJavaArtifact {
         var debugConfiguration = target.getProject().getConfigurations().create("systemcoreDebug");
         var releaseConfiguration = target.getProject().getConfigurations().create("systemcoreRelease");
 
+        this.mainClass = target.getProject().getObjects().property(String.class);
+
         this.getDirectory().set(CLASSPATH_PATH);
+        this.getDeleteOldFiles().set(true);
 
         robotCommandArtifact = target.getArtifacts().create("robotCommand" + name, RobotCommandArtifact.class, art -> {
             art.setRobotCommandFunc(this::generateStartCommand);
@@ -96,12 +105,11 @@ public class WPILibJavaArtifact extends DebuggableJavaArtifact {
         this.gcType = gcType;
     }
 
-    private String mainClass;
-
-    public void configureApplication(Configuration runtimeClasspath, Jar jarTask, String mainClass) {
-        setConfiguration(runtimeClasspath);
-        setJar(jarTask);
-        this.mainClass = mainClass;
+    public void configureApplication(JavaApplication javaApplication) {
+        JvmFeatureInternal mainFeature = JavaPluginHelper.getJavaComponent(getTarget().getProject()).getMainFeature();
+        setConfiguration(mainFeature.getRuntimeClasspathConfiguration());
+        setJar(mainFeature.getJarTask().get());
+        this.mainClass.set(javaApplication.getMainClass());
     }
 
     public RobotCommandArtifact getRobotCommandArtifact() {
@@ -148,7 +156,7 @@ public class WPILibJavaArtifact extends DebuggableJavaArtifact {
             args.add("-XX:+UsePerfData -agentlib:jdwp=transport=dt_socket,address=0.0.0.0:" + getDebugPort() + ",server=y,suspend=y");
         }
 
-        args.add(mainClass);
+        args.add(mainClass.get());
 
         args.addAll(arguments);
 

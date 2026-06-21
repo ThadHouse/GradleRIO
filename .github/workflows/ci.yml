@@ -41,7 +41,7 @@ jobs:
       MAVEN_LOCAL_REPO: ${{ github.workspace }}/ci-maven-repository
     strategy:
      matrix:
-        language: [cpp, java] #, asm, jni]
+        language: [cpp, java, kotlin] #, asm, jni]
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-java@v4
