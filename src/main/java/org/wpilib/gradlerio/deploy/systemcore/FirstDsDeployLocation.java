@@ -13,7 +13,6 @@ import java.util.Optional;
 import javax.inject.Inject;
 
 import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
 
 import org.wpilib.deployutils.deploy.target.RemoteTarget;
 import org.wpilib.deployutils.deploy.target.discovery.action.DiscoveryAction;
@@ -29,9 +28,9 @@ public class FirstDsDeployLocation extends SshDeployLocation {
         super(name, target);
     }
 
-    private String dsAddress = "localhost";
+    private final String dsAddress = "localhost";
     private Optional<String> cachedAddress = Optional.empty();
-    private ETLogger log = ETLoggerFactory.INSTANCE.create("FirstDsDeployLocation");
+    private final ETLogger log = ETLoggerFactory.INSTANCE.create("FirstDsDeployLocation");
     private int timeout = 1000;
     private int port = 6770;
 
@@ -57,11 +56,6 @@ public class FirstDsDeployLocation extends SshDeployLocation {
     }
 
     @Override
-    public void setAddress(String address) {
-        this.dsAddress = address;
-    }
-
-    @Override
     public DiscoveryAction createAction() {
         return new SshDiscoveryAction(this);
     }
@@ -73,7 +67,6 @@ public class FirstDsDeployLocation extends SshDeployLocation {
 
     @Override
     public void discover() {
-        cachedAddress = Optional.of("FIRST DS Connection Issue");
         cachedAddress = Optional.of(determineAddress());
     }
 

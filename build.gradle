@@ -25,6 +25,8 @@ dependencies {
 
     api 'org.wpilib:native-utils:2027.10.0'
 
+    api 'org.jmdns:jmdns:3.6.3'
+
     api 'de.undercouch:gradle-download-task:5.6.0'
 
     testImplementation('org.spockframework:spock-core:2.4-M6-groovy-4.0') {

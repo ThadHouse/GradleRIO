@@ -29,9 +29,9 @@ public class NiDsDeployLocation extends SshDeployLocation {
         super(name, target);
     }
 
-    private String dsAddress = "localhost";
+    private final String dsAddress = "localhost";
     private Optional<String> cachedAddress = Optional.empty();
-    private ETLogger log = ETLoggerFactory.INSTANCE.create("NiDsDeployLocation");
+    private final ETLogger log = ETLoggerFactory.INSTANCE.create("NiDsDeployLocation");
     private int timeout = 1000;
     private int port = 1742;
 
@@ -57,11 +57,6 @@ public class NiDsDeployLocation extends SshDeployLocation {
     }
 
     @Override
-    public void setAddress(String address) {
-        this.dsAddress = address;
-    }
-
-    @Override
     public DiscoveryAction createAction() {
         return new SshDiscoveryAction(this);
     }
@@ -74,7 +69,6 @@ public class NiDsDeployLocation extends SshDeployLocation {
 
     @Override
     public void discover() {
-        cachedAddress = Optional.of("NI DS Connection Issue");
         cachedAddress = Optional.of(determineAddress());
     }
 
