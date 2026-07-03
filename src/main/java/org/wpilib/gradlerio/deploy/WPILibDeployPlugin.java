@@ -10,6 +10,7 @@ import org.wpilib.deployutils.deploy.DeployExtension;
 import org.wpilib.deployutils.deploy.artifact.Artifact;
 import org.wpilib.deployutils.deploy.context.DeployContext;
 import org.wpilib.deployutils.deploy.target.location.DeployLocation;
+import org.wpilib.gradlerio.deploy.systemcore.MulticastDeployLocation;
 import org.wpilib.gradlerio.deploy.systemcore.NiDsDeployLocation;
 import org.wpilib.gradlerio.deploy.systemcore.FirstDsDeployLocation;
 import org.wpilib.gradlerio.deploy.systemcore.WPILibJNILibraryArtifact;
@@ -41,6 +42,7 @@ public class WPILibDeployPlugin implements Plugin<Project> {
 
         NamedObjectFactory.registerType(NiDsDeployLocation.class, locations, target, objects);
         NamedObjectFactory.registerType(FirstDsDeployLocation.class, locations, target, objects);
+        NamedObjectFactory.registerType(MulticastDeployLocation.class, locations, target, objects);
     }
 
     @Override

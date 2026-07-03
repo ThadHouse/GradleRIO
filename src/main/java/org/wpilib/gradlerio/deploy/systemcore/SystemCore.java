@@ -97,6 +97,12 @@ public class SystemCore extends WPIRemoteTarget {
             ds.setPassword(password);
             ds.setIpv6(false);
         });
+
+        getLocations().create("mdns", MulticastDeployLocation.class, mdns -> {
+            mdns.setUser(username);
+            mdns.setPassword(password);
+            mdns.setIpv6(false);
+        });
     }
 
     public void addAddress(String address) {
