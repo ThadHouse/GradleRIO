@@ -1,5 +1,5 @@
 plugins {
-    id "java"
+    id "org.jetbrains.kotlin.jvm" version "2.4.0"
     id "application"
     id "org.wpilib.GradleRIO" version "2027.0.0-alpha-6"
 }
@@ -7,13 +7,12 @@ plugins {
 def projectFolder = project.buildFile.parentFile
 def testingFolder = projectFolder.parentFile
 
-if (testingFolder.name != 'testing' || projectFolder.name != 'java') {
+if (testingFolder.name != 'testing' || projectFolder.name != 'kotlin') {
     throw new GradleException("These projects are not to be used for robot projects. See README.md in the GradleRIO testing folder for the correct templates to use.")
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
+kotlin {
+    jvmToolchain(25)
 }
 
 def ROBOT_MAIN_CLASS = "first.team0000.robot.Main"

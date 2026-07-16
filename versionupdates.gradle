@@ -8,17 +8,24 @@ def versionMap = [
   opencvVersion: 'org.wpilib.thirdparty.opencv:opencv-java:+',
   wpicalToolVersion: 'org.wpilib.tools:wpical:+:windowsx86-64@zip',
   processstarterToolVersion: 'org.wpilib.tools:processstarter:+:windowsx86-64@zip',
+  mrcLibVersion: 'org.wpilib.mrclib:mrclib-cpp:+:windowsx86-64@zip',
 ]
 
 configurations {
   gradleRioVersions
 }
 
-def useDevelopmentProperty = 'useDevelopment'
+// We need some special logic to switch the processstarter tool between development and release repositories
+def currentUseDevelopment = true
+
+def switchToDevelopment = 'switchToDevelopment'
+def switchToRelease = 'switchToRelease'
+
+def useDevelopment = project.hasProperty(switchToDevelopment) || (currentUseDevelopment && !project.hasProperty(switchToRelease))
 
 project.repositories.maven { repo ->
     repo.name = "WPI"
-    if (project.hasProperty(useDevelopmentProperty)) {
+    if (useDevelopment) {
       repo.url = "https://frcmaven.wpi.edu/artifactory/development-2027"
     } else {
       repo.url = "https://frcmaven.wpi.edu/artifactory/release-2027"
@@ -35,17 +42,28 @@ String regex = "String\\s+?placeholder\\s+?=\\s+?[\\\"|\\'].+?[\\\"|\\']"
 String buildRegex = "def\\s+?placeholder\\s+?=\\s+?[\\\"|\\'].+?[\\\"|\\']"
 String mavenDevRegex = "this\\.useDevelopment\\s*=\\s*(true|false)"
 String validVersionsRegex = "validImageVersions = List\\.of\\((.+)\\);"
+String currentUseDevelopmentRegex = "def currentUseDevelopment\\s*=\\s*(true|false)"
 
 tasks.register('UpdateVersions') {
   doLast {
     def mavenExtFile = file('src/main/java/org/wpilib/gradlerio/wpi/WPIMavenExtension.java')
     def mavenExtText = mavenExtFile.text
     def toSet = "this.useDevelopment = false"
-    if (project.hasProperty(useDevelopmentProperty)) {
+    if (useDevelopment) {
       toSet = "this.useDevelopment = true"
     }
 
     mavenExtFile.text = mavenExtText.replaceAll(mavenDevRegex, toSet)
+
+    def thisFile = file('versionupdates.gradle')
+    def gradleToSet = "def currentUseDevelopment"
+
+    if (useDevelopment) {
+      gradleToSet += " = true"
+    } else {
+      gradleToSet += " = false"
+    }
+    thisFile.text = thisFile.text.replaceAll(currentUseDevelopmentRegex, gradleToSet)
 
 
     def extFile = file('src/main/java/org/wpilib/gradlerio/wpi/WPIVersionsExtension.java')

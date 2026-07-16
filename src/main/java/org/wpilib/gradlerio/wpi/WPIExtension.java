@@ -111,6 +111,8 @@ public class WPIExtension {
             toolsClassifier = "linuxx64";
         } else if (desktop.equals("windowsx86-64")) {
             toolsClassifier = "winx64";
+        } else if (desktop.equals("windowsarm64")) {
+            toolsClassifier = "winarm64";
         } else if (desktop.equals("osxx86-64")) {
             toolsClassifier = "macx64";
         } else if (desktop.equals("osxarm64")) {

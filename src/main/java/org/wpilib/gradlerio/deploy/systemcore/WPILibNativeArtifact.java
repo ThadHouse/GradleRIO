@@ -56,7 +56,7 @@ public class WPILibNativeArtifact extends DebuggableNativeArtifact {
         });
 
         robotCommandArtifact = target.getArtifacts().create("robotCommand" + name, RobotCommandArtifact.class, art -> {
-            art.setStartCommandFunc(this::generateStartCommand);
+            art.setRobotCommandFunc(this::generateStartCommand);
             art.dependsOn(getInstallTaskProvider());
         });
 

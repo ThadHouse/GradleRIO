@@ -12,39 +12,44 @@ import com.google.gson.GsonBuilder;
 
 import org.codehaus.groovy.runtime.ResourceGroovyMethods;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.Project;
+import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.plugins.JavaApplication;
+import org.gradle.api.plugins.internal.JavaPluginHelper;
+import org.gradle.api.plugins.jvm.internal.JvmFeatureInternal;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.jvm.tasks.Jar;
 import org.wpilib.gradlerio.wpi.WPIExtension;
 import org.wpilib.gradlerio.wpi.java.ExtractNativeJavaArtifacts;
 import org.wpilib.gradlerio.wpi.simulation.SimulationExtension;
 
 public class JavaExternalSimulationTask extends DefaultTask {
-    private final List<Jar> jars = new ArrayList<>();
     private Provider<ExtractNativeJavaArtifacts> extractJni;
-    private boolean isDebug;
-
-    @Internal
-    public List<Jar> getJars() {
-        return jars;
-    }
-
-    public void setDependencies(SimulationExtension sim, Provider<ExtractNativeJavaArtifacts> extract, boolean debug, Project project) {
-        this.extractJni = extract;
-        isDebug = debug;
-        this.dependsOn(extractJni);
-    }
+    private final String projectName;
+    private final WPIExtension ext;
+    private JavaApplication application;
+    private String taskPath;
+    private Property<Integer> debugPort;
+    private Property<Boolean> runSimWithDebugJni;
 
     @Inject
     public JavaExternalSimulationTask(ObjectFactory objects) {
         getOutputs().upToDateWhen(spec -> false);
-        dependsOn(jars);
         simulationFile = objects.fileProperty();
+        this.projectName = getProject().getName();
+        this.ext = getProject().getExtensions().getByType(WPIExtension.class);
+        this.debugPort = objects.property(Integer.class);
+        this.runSimWithDebugJni = objects.property(Boolean.class);
+    }
+
+    public void setDependencies(Provider<ExtractNativeJavaArtifacts> extract, Provider<Boolean> runSimWithDebugJni) {
+        this.extractJni = extract;
+        this.dependsOn(extractJni);
+        this.runSimWithDebugJni.set(runSimWithDebugJni);
     }
 
     private final RegularFileProperty simulationFile;
@@ -61,37 +66,52 @@ public class JavaExternalSimulationTask extends DefaultTask {
         public final Map<String, String> environment;
         public final String libraryDir;
         public final String mainClassName;
+        public final String taskPath;
+        public final int debugPort;
 
         public SimInfo(String name, List<HalSimPair> extensions, Map<String, String> environment, String libraryDir,
-                String mainClassName) {
+                String mainClassName, String taskPath, int debugPort) {
             this.name = name;
             this.extensions = extensions;
             this.environment = environment;
             this.libraryDir = libraryDir;
             this.mainClassName = mainClassName;
+            this.taskPath = taskPath;
+            this.debugPort = debugPort;
         }
+    }
+
+    public void setApplication(JavaApplication application) {
+        this.application = application;
+        JvmFeatureInternal mainFeature = JavaPluginHelper.getJavaComponent(getProject()).getMainFeature();
+        dependsOn(mainFeature.getRuntimeClasspathConfiguration());
+        dependsOn(mainFeature.getJarTask());
+        JavaExec runTask = (JavaExec) getProject().getTasks().named("run").get();
+        this.taskPath = runTask.getPath();
+        this.debugPort.set(runTask.getDebugOptions().getPort());
     }
 
     @TaskAction
     public void execute() throws IOException {
-        var ext = getProject().getExtensions().getByType(WPIExtension.class);
+        if (application == null) {
+            throw new GradleException("Java application is not set for simulation task.");
+        }
+
         SimulationExtension sim = ext.getSim();
 
         File ldpath = extractJni.get().getDestinationDirectory().get().getAsFile();
 
         List<SimInfo> simInfo = new ArrayList<>();
 
-        List<HalSimPair> extensions = sim.getHalSimLocations(List.of(ldpath), isDebug);
+        List<HalSimPair> extensions = sim.getHalSimLocations(List.of(ldpath), runSimWithDebugJni.get());
 
         Map<String, String> env = sim.getEnvironment();
 
-        for (Jar jar : jars) {
-            String name =  jar.getName() + " (in project " + getProject().getName() + ")";
+        String name = application.getApplicationName() + " (in project " + projectName + ")";
 
-            String mainClass = (String)jar.getManifest().getAttributes().get("Main-Class");
+        String mainClass = application.getMainClass().get();
 
-            simInfo.add(new SimInfo(name, extensions, env, ldpath.getAbsolutePath(), mainClass));
-        }
+        simInfo.add(new SimInfo(name, extensions, env, ldpath.getAbsolutePath(), mainClass, taskPath, debugPort.get()));
 
         GsonBuilder builder = new GsonBuilder();
         builder.setPrettyPrinting();
