@@ -56,6 +56,10 @@ public class WPIJavaDepsExtension {
         createJavaDependencies("org.wpilib.wpiunits", "wpiunits-java", versions.getWpilibVersion());
         createJavaDependencies("org.wpilib.epilogue", "epilogue-runtime-java", versions.getWpilibVersion());
         createJavaDependencies("org.wpilib.datalog", "datalog-java", versions.getWpilibVersion());
+        createJavaDependencies("org.wpilib.drivers", "drivers-java", versions.getWpilibVersion());
+        createJavaDependencies("org.wpilib.fields", "fields-java", versions.getWpilibVersion());
+        createJavaDependencies("org.wpilib.telemetry", "telemetry-java", versions.getWpilibVersion());
+        createJavaDependencies("org.wpilib.tunables", "tunables-java", versions.getWpilibVersion());
 
         createJavaDependencies("org.wpilib", "annotations-java", versions.getWpilibVersion());
 
@@ -72,12 +76,12 @@ public class WPIJavaDepsExtension {
     /** Dependencies required for using WPILib's Java annotations and other libraries during compilation. */
     public List<Provider<String>> wpilibAnnotations() {
         // epilogue-runtime is a dependency of epilogue-processor, and needs to be on the annotation processor
-        // classpath at compile time for the processor to function. Same with annotations for wpilibj-javac-plugin.
+        // classpath at compile time for the processor to function. Same with annotations for wpilib javac-plugin.
         return List.of(
                 providers.provider(() -> dependencyNotation("io.avaje", "avaje-jsonb-generator", versions.getAvajeVersion())),
                 providers.provider(() -> dependencyNotation("org.wpilib.epilogue", "epilogue-processor-java", versions.getWpilibVersion())),
                 providers.provider(() -> dependencyNotation("org.wpilib.epilogue", "epilogue-runtime-java", versions.getWpilibVersion())),
-                providers.provider(() -> dependencyNotation("org.wpilib", "wpilibj-javac-plugin-java", versions.getWpilibVersion())),
+                providers.provider(() -> dependencyNotation("org.wpilib", "javac-plugin-java", versions.getWpilibVersion())),
                 providers.provider(() -> dependencyNotation("org.wpilib", "annotations-java", versions.getWpilibVersion()))
         );
     }
@@ -106,6 +110,8 @@ public class WPIJavaDepsExtension {
         valueList.add(createJniDependency("org.wpilib.wpiutil", "wpiutil-cpp", versions.getWpilibVersion(), debug, platform));
         valueList.add(createJniDependency("org.wpilib.apriltag", "apriltag-cpp", versions.getWpilibVersion(), debug, platform));
         valueList.add(createJniDependency("org.wpilib.datalog", "datalog-cpp", versions.getWpilibVersion(), debug, platform));
+        valueList.add(createJniDependency("org.wpilib.telemetry", "telemetry-cpp", versions.getWpilibVersion(), debug, platform));
+        valueList.add(createJniDependency("org.wpilib.tunables", "tunables-cpp", versions.getWpilibVersion(), debug, platform));
 
         if (!platform.equals(NativePlatforms.systemcore)) {
             valueList.add(createJniDependency("org.wpilib.mrclib", "mrclib-cpp", versions.getMrcLibVersion(), false, platform)); // Does not have debug in any case
