@@ -164,7 +164,8 @@ public class WPIExtension {
             return new File(userFolder, ".wpilib");
         }
 
-        if (isLinux && xdgDataHome != null && !xdgDataHome.isBlank()) {
+        if (isLinux && xdgDataHome != null && !xdgDataHome.isBlank()
+            && (new File(xdgDataHome).isAbsolute() || xdgDataHome.startsWith("/"))) {
             return new File(xdgDataHome, "wpilib");
         }
 

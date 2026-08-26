@@ -15,6 +15,7 @@ class WPIExtensionHomeRootTest extends Specification {
         false     | false    | true    | "/home/team"   | null               | "/data/team/share" || new File("/data/team/share", "wpilib")
         false     | false    | true    | "/home/team"   | null               | null               || new File("/home/team/.local/share", "wpilib")
         false     | false    | true    | "/home/team"   | null               | ""                 || new File("/home/team/.local/share", "wpilib")
+        false     | false    | true    | "/home/team"   | null               | "data/team/share"  || new File("/home/team/.local/share", "wpilib")
         false     | false    | false   | "/home/team"   | null               | "/data/team/share" || new File("/home/team", ".wpilib")
     }
 }
