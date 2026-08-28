@@ -6,7 +6,6 @@ def wpilibVersionKeys = [
   'sysIdVersion',
   'dataLogToolVersion',
   'wpicalToolVersion',
-  'processstarterToolVersion',
 ]
 
 // These dependencies use the versions selected by the corresponding WPILib build,
@@ -26,8 +25,8 @@ configurations {
 
 configurations.gradleRioVersions.resolutionStrategy.cacheDynamicVersionsFor 0, 'seconds'
 
-// We need some special logic to switch the processstarter tool between development and release repositories
-def currentUseDevelopment = true
+// We need some special logic to switch the build between development and release repositories
+def currentUseDevelopment = false
 
 def switchToDevelopment = 'switchToDevelopment'
 def switchToRelease = 'switchToRelease'
