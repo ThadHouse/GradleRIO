@@ -284,7 +284,13 @@ public class WPIJavaExtension {
                 });
 
         project.getTasks().register("simulateJava", t -> {
-            throw new GradleException("The simulateJava task has been removed. Use run instead.");
+            t.doLast(new Action<Task>() {
+                @Override
+                public void execute(Task arg0) {
+                    throw new GradleException("The simulateJava task has been removed. Use run instead.");
+                }
+            });
+
         });
     }
 }
