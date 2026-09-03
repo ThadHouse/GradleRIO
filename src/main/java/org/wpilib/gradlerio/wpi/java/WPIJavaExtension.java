@@ -282,5 +282,9 @@ public class WPIJavaExtension {
                     t.getSimulationFile().set(project.getLayout().getBuildDirectory().file("sim/java.json"));
                     t.setDependencies(typedExtractNativeArtifacts, runSimWithDebugJni);
                 });
+
+        project.getTasks().register("simulateJava", t -> {
+            throw new GradleException("The simulateJava task has been removed. Use run instead.");
+        });
     }
 }
